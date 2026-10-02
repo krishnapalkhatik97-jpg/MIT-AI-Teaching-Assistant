@@ -71,7 +71,7 @@ def ask_question(query):
     # 2. Retrieve relevant chunks from FAISS
     # --------------------------------------------------------
 
-    k = 5
+    k = 10
 
     distances, indices = index.search(
         query_embedding,
@@ -303,95 +303,44 @@ STUDENT QUESTION:
     return answer, retrieved_chunks
 
 
+## ============================================================
+# TERMINAL CHAT MODE
 # ============================================================
-# CHAT LOOP
-# ============================================================
 
-print("\nMIT AI Teaching Assistant")
-print("Type 'exit' to quit.\n")
+if __name__ == "__main__":
 
+    print("\nMIT AI Teaching Assistant")
+    print("Type 'exit' to quit.\n")
 
-while True:
+    while True:
+        query = input("You: ").strip()
 
-    query = input("You: ").strip()
+        if query.lower() == "exit":
+            print("Goodbye!")
+            break
 
+        if not query:
+            print("Please enter a question.\n")
+            continue
 
-    # --------------------------------------------------------
-    # Exit
-    # --------------------------------------------------------
+        print("\nThinking...\n")
 
-    if query.lower() == "exit":
+        answer, sources = ask_question(query)
 
-        print("Goodbye!")
+        print("=" * 80)
+        print("ANSWER")
+        print("=" * 80)
+        print(answer)
 
-        break
+        print("\n" + "=" * 80)
+        print("RETRIEVED SOURCES")
+        print("=" * 80)
 
+        for i, source in enumerate(sources, start=1):
+            print(f"\n--- Source {i} ---")
+            print(f"Lecture: {source['lecture']}")
+            print(f"Chunk ID: {source['chunk_id']}")
+            print(f"Distance: {source['distance']:.4f}")
+            print(source["text"][:400])
 
-    # --------------------------------------------------------
-    # Empty question
-    # --------------------------------------------------------
-
-    if not query:
-
-        print("Please enter a question.\n")
-
-        continue
-
-
-    # --------------------------------------------------------
-    # Clear conversation
-    # --------------------------------------------------------
-
-    if query.lower() == "clear":
-
-        conversation_history.clear()
-
-        print("\nConversation memory cleared.\n")
-
-        continue
-
-
-    print("\nThinking...\n")
-
-
-    # --------------------------------------------------------
-    # Ask RAG system
-    # --------------------------------------------------------
-
-    answer, sources = ask_question(query)
-
-
-    # --------------------------------------------------------
-    # Display answer
-    # --------------------------------------------------------
-
-    print("=" * 80)
-    print("ANSWER")
-    print("=" * 80)
-
-    print(answer)
-
-
-    # --------------------------------------------------------
-    # Display retrieved sources
-    # --------------------------------------------------------
-
-    print("\n" + "=" * 80)
-    print("RETRIEVED SOURCES")
-    print("=" * 80)
-
-
-    for i, source in enumerate(sources, start=1):
-
-        print(f"\n--- Source {i} ---")
-
-        print(f"Lecture: {source['lecture']}")
-
-        print(f"Chunk ID: {source['chunk_id']}")
-
-        print(f"Distance: {source['distance']:.4f}")
-
-        print(source["text"][:400])
-
-
-    print()
+        print()
