@@ -1,60 +1,24 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import sys
-from pathlib import Path
 
-# ============================================================
-# PROJECT PATH
-# ============================================================
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Allow Python to find scripts/rag.py
-sys.path.append(str(BASE_DIR / "scripts"))
-
-# ============================================================
-# IMPORT RAG
-# ============================================================
-
-from rag import ask_question
+from scripts.rag import ask_question
 
 
-# ============================================================
-# FASTAPI APP
-# ============================================================
-
-app = FastAPI(
-    title="MIT AI Teaching Assistant",
-    description="RAG-powered MIT 6.0002 AI Teaching Assistant",
-    version="1.0.0"
-)
+app = FastAPI(title="MIT AI Teaching Assistant")
 
 
-# ============================================================
-# CORS
-# ============================================================
-
+# Allow Vite frontend to communicate with FastAPI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# ============================================================
-# REQUEST MODEL
-# ============================================================
-
-class QuestionRequest(BaseModel):
-    question: str
-
-
-# ============================================================
-# ROOT
-# ============================================================
 
 @app.get("/")
 def root():
@@ -63,10 +27,6 @@ def root():
     }
 
 
-# ============================================================
-# HEALTH CHECK
-# ============================================================
-
 @app.get("/health")
 def health():
     return {
@@ -74,16 +34,25 @@ def health():
     }
 
 
-# ============================================================
-# ASK QUESTION
-# ============================================================
-
 @app.post("/ask")
-def ask(request: QuestionRequest):
+def ask(data: dict):
+    question = data.get("question", "").strip()
 
-    answer, sources = ask_question(request.question)
+    if not question:
+        return {
+            "error": "Question is required"
+        }
+
+    answer, sources = ask_question(question)
 
     return {
         "answer": answer,
-        "sources": sources
+        "sources": [
+            {
+                "lecture": source["lecture"],
+                "chunk_id": source["chunk_id"],
+                "distance": source["distance"],
+            }
+            for source in sources
+        ],
     }
